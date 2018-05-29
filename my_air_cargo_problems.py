@@ -48,42 +48,91 @@ class AirCargoProblem(Problem):
             list of Action objects
         """
 
-        # TODO create concrete Action objects based on the domain action schema for: Load, Unload, and Fly
-        # concrete actions definition: specific literal action that does not include variables as with the schema
-        # for example, the action schema 'Load(c, p, a)' can represent the concrete actions 'Load(C1, P1, SFO)'
-        # or 'Load(C2, P2, JFK)'.  The actions for the planning problem must be concrete because the problems in
-        # forward search and Planning Graphs must use Propositional Logic
-
         def load_actions():
             """Create all concrete Load actions and return a list
 
             :return: list of Action objects
+
+            Action(Load(c, p, a),
+            	PRECOND: At(c, a) ∧ At(p, a) ∧ Cargo(c) ∧ Plane(p) ∧ Airport(a)
+            	EFFECT: ¬ At(c, a) ∧ In(c, p))
             """
+            # all load ground actions
             loads = []
-            # TODO create all load ground actions from the domain Load action
+
+            for c in self.cargos:
+                for p in self.planes:
+                    for a in self.airports:
+
+                        # list of preconditions
+                        precond_pos = [expr("At({}, {})".format(c, a)),
+                                       expr("At({}, {})".format(p, a)),]
+                        precond_neg = []
+
+                        # list of effects
+                        effect_add = [expr("In({}, {})".format(c, p)),]
+                        effect_rem = [expr("At({}, {})".format(c, a)),]
+
+                        # load actions of cargo, planes & airports
+                        load = Action(expr("Load({}, {}, {})".format(c, p, a)),
+                                     [precond_pos, precond_neg],
+                                     [effect_add, effect_rem])
+
+                        # append load actions to list of Action objects
+                        loads.append(load)
+
             return loads
 
         def unload_actions():
             """Create all concrete Unload actions and return a list
 
             :return: list of Action objects
+
+            Action(Unload(c, p, a),
+            	PRECOND: In(c, p) ∧ At(p, a) ∧ Cargo(c) ∧ Plane(p) ∧ Airport(a)
+            	EFFECT: At(c, a) ∧ ¬ In(c, p))
             """
+            # all unload ground actions
             unloads = []
-            # TODO create all Unload ground actions from the domain Unload action
+
+            for c in self.cargos:
+                for p in self.planes:
+                    for a in self.airports:
+
+                        # list of preconditions
+                        precond_pos = [expr("In({}, {})".format(c, p)),
+                                       expr("At({}, {})".format(p, a)),]
+                        precond_neg = []
+
+                        # list of effects
+                        effect_add = [expr("In({}, {})".format(c, a)),]
+                        effect_rem = [expr("At({}, {})".format(c, p)),]
+
+                        # unload actions of cargo, planes & airports
+                        load = Action(expr("Unload({}, {}, {})".format(c, p, a)),
+                                     [precond_pos, precond_neg],
+                                     [effect_add, effect_rem])
+
+                        # append unload actions to list of Action objects
+                        loads.append(load)
+
             return unloads
 
         def fly_actions():
             """Create all concrete Fly actions and return a list
 
             :return: list of Action objects
+
+            Action(Fly(p, from, to),
+            	PRECOND: At(p, from) ∧ Plane(p) ∧ Airport(from) ∧ Airport(to)
+            	EFFECT: ¬ At(p, from) ∧ At(p, to))
             """
             flys = []
             for fr in self.airports:
                 for to in self.airports:
                     if fr != to:
                         for p in self.planes:
-                            precond_pos = [expr("At({}, {})".format(p, fr)),
-                                           ]
+                            precond_pos = [expr("At({}, {})".format(p, fr)),]
                             precond_neg = []
                             effect_add = [expr("At({}, {})".format(p, to))]
                             effect_rem = [expr("At({}, {})".format(p, fr))]
