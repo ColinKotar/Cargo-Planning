@@ -152,8 +152,28 @@ class AirCargoProblem(Problem):
             e.g. 'FTTTFF'
         :return: list of Action objects
         """
-        # TODO implement
+        # possible actions
         possible_actions = []
+
+        # knowledge base; tell sentence of state
+        kb = PropKB()
+        kb.tell(decode_state(state, self.state_map).pos_sentence())
+
+        # loop through action_list to check with pos & neg preconditions
+        for action in self.actions_list:
+            is_legal = True # assume legal action
+
+            # not legal action if positive preconditions is not in clauses
+            for clause in action.precond_pos:
+                is_legal = clause not in kb.clauses
+
+            # not legal action if negative precondition is in clauses
+            for clause in action.precond_neg:
+                is_legal = clause in kb.clauses
+
+            # append to list of actions if is_legal
+            possible_actions.append(action) if is_legal
+
         return possible_actions
 
     def result(self, state: str, action: Action):
@@ -165,8 +185,21 @@ class AirCargoProblem(Problem):
         :param action: Action applied
         :return: resulting state after action
         """
-        # TODO implement
         new_state = FluentState([], [])
+
+        # get old state
+        old_state = decode_state(state, self.state_map)
+
+        # new_state.pos from the result of old_state.pos & action.effect_add
+        new_state.pos.extend(
+        [action if action not in action.effect_rem for action in old_state.pos] +
+        [action if action not in new_state.pos for action in action.effect_add])
+
+        # new_state.neg from the result of old_state.neg & action.effect_rem
+        new_state.neg.extend(
+        [action if action not in action.effect_add for action in old_state.neg] +
+        [action if action not in new_state.neg for action in action.effect_rem])
+
         return encode_state(new_state, self.state_map)
 
     def goal_test(self, state: str) -> bool:
