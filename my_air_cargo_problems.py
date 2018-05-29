@@ -190,6 +190,7 @@ class AirCargoProblem(Problem):
         # get old state
         old_state = decode_state(state, self.state_map)
 
+        # list comprehension with conditionals efficiency & readability
         # new_state.pos from the result of old_state.pos & action.effect_add
         new_state.pos.extend(
         [action if action not in action.effect_rem for action in old_state.pos] +
@@ -239,9 +240,16 @@ class AirCargoProblem(Problem):
         conditions by ignoring the preconditions required for an action to be
         executed.
         """
-        # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
-        count = 0
-        return count
+        # implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
+        # knowledge base
+        kb = PropKB()
+        kb.tell(decode_state(node.state, self.state_map).pos_sentence())
+
+        # all actions to reach goal, regardless of preconditions
+        list_of_actions = [action for action in self.goal if action not in kb.clauses]
+
+        # return length
+        return len(list_of_actions)
 
 
 def air_cargo_p1() -> AirCargoProblem:
@@ -270,10 +278,102 @@ def air_cargo_p1() -> AirCargoProblem:
 
 
 def air_cargo_p2() -> AirCargoProblem:
-    # TODO implement Problem 2 definition
-    pass
+
+    cargos = ['C1', 'C2', 'C3']
+    planes = ['P1', 'P2', 'P3']
+    airports = ['JFK', 'SFO', 'ATL']
+
+    pos = [expr('At(C1, SFO)'),
+           expr('At(C2, JFK)'),
+           expr('At(C3, ATL)'),
+           expr('At(P1, SFO)'),
+           expr('At(P2, JFK)'),
+           expr('At(P3, ATL)')
+           ]
+
+    neg = [expr('At(C1, JFK)'),
+           expr('At(C1, ATL)'),
+           expr('In(C1, P1)'),
+           expr('In(C1, P2)'),
+           expr('In(C1, P3)'),
+           expr('At(C2, SFO)'),
+           expr('At(C2, ATL)'),
+           expr('In(C2, P1)'),
+           expr('In(C2, P2)'),
+           expr('In(C2, P3)'),
+           expr('At(C3, JFK)'),
+           expr('At(C3, SFO)'),
+           expr('In(C3, P1)'),
+           expr('In(C3, P2)'),
+           expr('In(C3, P3)'),
+
+           expr('At(P1, JFK)'),
+           expr('At(P1, ATL)'),
+           expr('At(P2, SFO)'),
+           expr('At(P2, ATL)'),
+           expr('At(P3, JFK)'),
+           expr('At(P3, SFO)')
+           ]
+
+    init = FluentState(pos, neg)
+
+    goal = [expr('At(C1, JFK)'),
+            expr('At(C2, SFO)'),
+            expr('At(C3, SFO)')
+            ]
+
+    return AirCargoProblem(cargos, planes, airports, init, goal)
 
 
 def air_cargo_p3() -> AirCargoProblem:
-    # TODO implement Problem 3 definition
-    pass
+
+    cargos = ['C1', 'C2', 'C3', 'C4']
+    planes = ['P1', 'P2']
+    airports = ['JFK', 'SFO', 'ATL', 'ORD']
+
+    pos = [expr('At(C1, SFO)'),
+           expr('At(C2, JFK)'),
+           expr('At(C3, ATL)'),
+           expr('At(C4, ORD)'),
+           expr('At(P1, SFO)'),
+           expr('At(P2, JFK)'),
+           ]
+
+    neg = [expr('At(C1, JFK)'),
+           expr('At(C1, ATL)'),
+           expr('At(C1, ORD)'),
+           expr('In(C1, P1)'),
+           expr('In(C1, P2)'),
+           expr('At(C2, SFO)'),
+           expr('At(C2, ATL)'),
+           expr('At(C2, ORD)'),
+           expr('In(C2, P1)'),
+           expr('In(C2, P2)'),
+           expr('At(C3, JFK)'),
+           expr('At(C3, SFO)'),
+           expr('At(C3, ORD)'),
+           expr('In(C3, P1)'),
+           expr('In(C3, P2)'),
+           expr('At(C4, JFK)'),
+           expr('At(C4, SFO)'),
+           expr('At(C4, ATL)'),
+           expr('In(C4, P1)'),
+           expr('In(C4, P2)'),
+
+           expr('At(P1, JFK)'),
+           expr('At(P1, ATL)'),
+           expr('At(P1, ORD)'),
+           expr('At(P2, SFO)'),
+           expr('At(P2, ATL)'),
+           expr('At(P2, ORD)'),
+           ]
+
+    init = FluentState(pos, neg)
+
+    goal = [expr('At(C1, JFK)'),
+            expr('At(C3, JFK)'),
+            expr('At(C2, SFO)'),
+            expr('At(C4, SFO)'),
+            ]
+
+    return AirCargoProblem(cargos, planes, airports, init, goal)
