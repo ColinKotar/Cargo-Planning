@@ -70,8 +70,8 @@ class AirCargoProblem(Problem):
                         precond_neg = []
 
                         # list of effects
-                        effect_add = [expr("In({}, {})".format(c, p)),]
-                        effect_rem = [expr("At({}, {})".format(c, a)),]
+                        effect_add = [expr("In({}, {})".format(c, p))]
+                        effect_rem = [expr("At({}, {})".format(c, a))]
 
                         # load actions of cargo, planes & airports
                         load = Action(expr("Load({}, {}, {})".format(c, p, a)),
@@ -105,16 +105,16 @@ class AirCargoProblem(Problem):
                         precond_neg = []
 
                         # list of effects
-                        effect_add = [expr("In({}, {})".format(c, a)),]
-                        effect_rem = [expr("At({}, {})".format(c, p)),]
+                        effect_add = [expr("At({}, {})".format(c, a))]
+                        effect_rem = [expr("In({}, {})".format(c, p))]
 
                         # unload actions of cargo, planes & airports
-                        load = Action(expr("Unload({}, {}, {})".format(c, p, a)),
+                        unload = Action(expr("Unload({}, {}, {})".format(c, p, a)),
                                      [precond_pos, precond_neg],
                                      [effect_add, effect_rem])
 
                         # append unload actions to list of Action objects
-                        loads.append(load)
+                        unloads.append(unload)
 
             return unloads
 
@@ -155,7 +155,7 @@ class AirCargoProblem(Problem):
         # possible actions
         possible_actions = []
 
-        # knowledge base; tell sentence of state
+        # knowledge base
         kb = PropKB()
         kb.tell(decode_state(state, self.state_map).pos_sentence())
 
@@ -163,16 +163,21 @@ class AirCargoProblem(Problem):
         for action in self.actions_list:
             is_legal = True # assume legal action
 
-            # not legal action if positive preconditions is not in clauses
+            # not legal action if positive preconditions is not in kb
             for clause in action.precond_pos:
-                is_legal = clause not in kb.clauses
+                if clause not in kb.clauses:
+                    is_legal = False
+                    break
 
-            # not legal action if negative precondition is in clauses
+            # not legal action if negative precondition is in kb
             for clause in action.precond_neg:
-                is_legal = clause in kb.clauses
+                if clause in kb.clauses:
+                    is_legal = False
+                    break
 
             # append to list of actions if is_legal
-            possible_actions.append(action) if is_legal
+            if is_legal:
+                possible_actions.append(action)
 
         return possible_actions
 
@@ -193,13 +198,13 @@ class AirCargoProblem(Problem):
         # list comprehension with conditionals efficiency & readability
         # new_state.pos from the result of old_state.pos & action.effect_add
         new_state.pos.extend(
-        [action if action not in action.effect_rem for action in old_state.pos] +
-        [action if action not in new_state.pos for action in action.effect_add])
+        [a for a in old_state.pos if a not in action.effect_rem] +
+        [a for a in action.effect_add if a not in new_state.pos])
 
         # new_state.neg from the result of old_state.neg & action.effect_rem
         new_state.neg.extend(
-        [action if action not in action.effect_add for action in old_state.neg] +
-        [action if action not in new_state.neg for action in action.effect_rem])
+        [a for a in old_state.neg if a not in action.effect_add] +
+        [a for a in action.effect_rem if a not in new_state.neg])
 
         return encode_state(new_state, self.state_map)
 
