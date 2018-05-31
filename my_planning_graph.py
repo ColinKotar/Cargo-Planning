@@ -300,16 +300,16 @@ class PlanningGraph():
             adds A nodes to the current level in self.a_levels[level]
         """
         # new node placeholder & previous S literal level
-        new_node = []
+        new_node = set()
         prev_s_literal = self.s_levels[level]
 
         for action in self.all_actions:
             # create A node & A prenodes
             a_node = PgNode_a(action)
-            a_node_prenodes = a_node.prenodes
+            a_node_prenodes = set(a_node.prenodes) # remove redundancy
             # connect nodes if prenodes are subset of previous S literal level
-            if set(a_node_prenodes).issubset(prev_s_literal):
-                new_node.append(a_node)
+            if a_node_prenodes.issubset(prev_s_literal):
+                new_node.add(a_node)
                 for s_node in prev_s_literal:
                     if s_node in a_node_prenodes:
                         a_node.parents.add(s_node)
@@ -495,7 +495,8 @@ class PlanningGraph():
         :return: bool
         """
         # return mutual exclusion
-        return node_s1.symbol == node_s2.symbol and node_s1.is_pos != node_s2.is_pos
+        return node_s1.symbol == node_s2.symbol and \
+               node_s1.is_pos != node_s2.is_pos
 
 
     def inconsistent_support_mutex(self, node_s1: PgNode_s, node_s2: PgNode_s):
@@ -534,9 +535,8 @@ class PlanningGraph():
         for goal in self.problem.goal:
             pg_node = PgNode_s(goal, True) # positive goal to reach
             # make dictionary of s_levels to loop through
-            for (level, s_nodes) in enumerate(self.s_levels):
+            for level, s_nodes in enumerate(self.s_levels):
                 if pg_node in s_nodes: # increment level
                     level_sum += level
                     break
         return level_sum
-        
